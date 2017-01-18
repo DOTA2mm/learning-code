@@ -160,6 +160,11 @@
     }
   }
 
+  /**
+   * - 深度属性访问
+   * @param {Object} obj - 需要访问的变量
+   * @param {Array} path - 对象属性名组成的数组
+   */
   var deepGet = function (obj, path) {
     var length = path.length;
     for (var i = 0; i < length; i++) {
@@ -167,6 +172,13 @@
       obj = obj[path[i]];
     }
     return length ? obj : void 0;
+  }
+
+  var MAX_ARRAY_INDEX = Math.pow(2, 53) - 1;
+  var getLength = shallowProperty('length')
+  var isArrayLike = function () {
+    var length = getLength(collection)
+    return typeof length == 'number' && length >= 0 && length <= MAX_ARRAY_INDEX
   }
 
   // 对象函数
