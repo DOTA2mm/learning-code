@@ -153,7 +153,10 @@
     return result;
   }
 
-  // 属性访问的封装
+  /**
+   * - 属性访问的封装
+   * @param {String} key - 属性名
+   */
   var shallowProperty = function (key) {
     return function (obj) {
       return obj == null ? void 0 : obj[key];
@@ -176,9 +179,54 @@
 
   var MAX_ARRAY_INDEX = Math.pow(2, 53) - 1;
   var getLength = shallowProperty('length')
-  var isArrayLike = function () {
+  /**
+   * - 是否类数组对象
+   * 通过length属性判断是否为数组或类数组对象
+   */
+  var isArrayLike = function (collection) {
     var length = getLength(collection)
     return typeof length == 'number' && length >= 0 && length <= MAX_ARRAY_INDEX
+  }
+
+  // Collection Functions
+  // ---------------------
+
+  // cornerstone基石 'each'实现（forEach）
+  // 处理包括类数组的原生对象，等同对待稀疏数组
+  /**
+   * - 对象及数组的遍历
+   * @param {Object} obj - 被遍历的对象
+   * @param {Function} iteratee - 处理函数
+   * @param {Object} context - 处理函数的执行上下文
+   */
+  _.each = _.forEach = function (obj, iteratee, context) {
+    iteratee = optimizeCb(iteratee, context) // 将iteratee传入回调处理函数
+    var i, length
+    if (isArrayLike(obj)) {
+      for (i = 0, length = obj.length; i < length; i++) {
+        iteratee(obj[i], i, obj)
+      }
+    } else {
+      var keys = _.keys(obj)
+      for (i = 0, length = keys.length; i < length; i++) {
+        iteratee(obj[keys[i]], keys[i], obj)
+      }
+    }
+    return obj
+  }
+
+  // map方法的实现
+  // 返回对每个经过iteratee函数处理后的成员组成的数组
+  _.map = _.collect = function (obj, iteratee, context) {
+    iteratee = cb(iteratee, context)
+    var keys = !isArrayLike(obj) && _.keys(obj),// 处理
+      length = (keys || obj).length,
+      results = Array(length)
+    for (var index = 0; index < length; index++) {
+      var currentKey = keys ? keys[index] : index // 分别处理对象和数组
+      results[index] = iteratee(obj[currentKey], currentKey, obj)
+    }
+    return results
   }
 
   // 对象函数
