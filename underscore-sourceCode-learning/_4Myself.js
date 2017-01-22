@@ -10,7 +10,7 @@
 
   // 保存全局对象
   var root = typeof self == 'object' && self.self === self && self ||
-    typeof global == 'object' && global.global === global && global ||
+    typeof global === 'object' && global.global === global && global ||
     this || {}
   // Establish the root object, `window` (`self`) in the browser, `global`
   // on the server, or `this` in some virtual machines. We use `self`
@@ -115,7 +115,11 @@
 
   // 一个类似于ES6 rest(...)展开操作符的实现
   // 给定索引之后将参数放进数组
-  var restArgs = function (func, startIndex) {
+  /**
+   * @param {Function} func
+   * @param {Number} startIndex
+   */
+  var restArgs = function (func, startIndex) { // func.length - func参数的个数
     startIndex = startIndex == null ? func.length - 1 : +startIndex // +startIndex:类型转换
     return function () {
       var length = Math.max(arguments.length - startIndex, 0)
@@ -184,7 +188,7 @@
    */
   var isArrayLike = function (collection) {
     var length = getLength(collection)
-    return typeof length == 'number' && length >= 0 && length <= MAX_ARRAY_INDEX
+    return typeof length === 'number' && length >= 0 && length <= MAX_ARRAY_INDEX
   }
 
   // Collection Functions
@@ -218,7 +222,7 @@
   // 返回对每个经过iteratee函数处理后的成员组成的数组
   _.map = _.collect = function (obj, iteratee, context) {
     iteratee = cb(iteratee, context)
-    var keys = !isArrayLike(obj) && _.keys(obj) // 处理
+    var keys = !isArrayLike(obj) && _.keys(obj) // 处理对象
     var length = (keys || obj).length
     var results = Array(length)
     for (var index = 0; index < length; index++) {
@@ -231,14 +235,14 @@
   // reducing function (可从左右双向迭代)
   var createReduce = function (dir) {
     var reducer = function (obj, iteratee, memo, initial) {
-      var keys = !isArrayLike(obj) && _.keys(obj)
+      var keys = !isArrayLike(obj) && _.keys(obj) // 处理对象
       var length = (keys || obj).length
       var index = dir > 0 ? 0 : length - 1 // dir的正负值决定迭代的顺序
       if (!initial) { // initial求值结果转换为false（没传，false，null）
         memo = obj[keys ? keys[index] : index] // 区别对待对象和数组
-        index += dir
+        index += dir // 从第二项开始迭代
       }
-      for (; index >= 0 && index < length; index += dir) {
+      for (; index >= 0 && index < length; index += dir) { // 巧妙使用dir作为迭代变量递增值
         var currentKey = keys ? keys[index] : index
         memo = iteratee(memo, obj[currentKey], currentKey, obj)
       }
@@ -253,8 +257,156 @@
 
   // **Reduce** builds up a single result from a list of values, aka `inject`,
   // or `foldl`.
-  // 从值列表中创建单个结果
-  _.reduce = _.foldl = _.inject = 
+  // 从值列表中创建单个结果 (别名：左折叠)
+  _.reduce = _.foldl = _.inject = createReduce(1)
+
+  // 从右向左缩容 (别名：右折叠)
+  _.reduceRight = _.foldr = createReduce(-1)
+
+  // 返回通过真值测试的第一个值
+  _.find = _.detect = function (obj, predicate, context) {
+    var keyFinder = isArrayLike(obj) ? _.findIndex : _.findKey
+    var key = keyFinder(obj, predicate, context)
+    if (key !== void 0 && key !== -1) return obj[key]
+  }
+
+  // 返回通过真值测试的所有元素
+  _.filter = _.select = function (obj, predicate, context) {
+    var results = []
+    predicate = cb(predicate, context)
+    _.each(obj, function (value, index, list) {
+      if (predicate(value, index, list)) results.push(value)
+    })
+    return results
+  }
+
+  // 返回所有没有通过真值测试的元素
+  _.reject = function (obj, predicate, context) {
+    return _.filter(obj, _.negate(cb(predicate)), context)
+  }
+
+  // every - 验证所有项是否都通过真值测试
+  _.every = _.all = function (obj, predicate, context) {
+    predicate = cb(predicate, context)
+    var keys = !isArrayLike(obj) && _.keys(obj)
+    var length = (keys || obj).length
+    for (var index = 0; index < length; index++) {
+      var currentKey = keys ? keys[index] : index
+      if (!predicate(obj[currentKey], currentKey, obj)) return false
+    }
+    return true
+  }
+
+  // some - 验证至少有一项通过真值测试
+  _.some = _.any = function (obj, predicate, context) {
+    predicate = cb(predicate, context)
+    var keys = !isArrayLike(obj) && _.keys(obj)
+    var length = (keys || obj).length
+    for (var index = 0; index < length; index++) {
+      var currentKey = keys ? keys[index] : index
+      if (predicate(obj[currentKey], currentKey, obj)) return true
+    }
+    return false
+  }
+
+  // 判断对象或数组中是否存在给定项
+  _.contains = _.includes = _.include = function (obj, item, fromIndex, guard) {
+    if (!isArrayLike(obj)) obj = _.values(obj)
+    if (typeof fromIndex !== 'number' || guard) fromIndex = 0
+    return _.indexOf(obj, item, fromIndex) >= 0
+  }
+
+  // 带参调用集合中每一项的方法
+  _.invoke = restArgs(function (obj, path, args) {
+    var contextPath
+    var func
+    if (_.isFunction(path)) {
+      func = path
+    } else if (_.isArray(path)) {
+      contextPath = path.slice(0, -1)
+      path = path[path.length - 1]
+    }
+    return _.map(obj, function (context) {
+      var method = func
+      if (!method) {
+        if (contextPath && contextPath.length) {
+          context = deepGet(context, contextPath)
+        }
+        if (context == null) return void 0
+        method = context[path]
+      }
+      return method == null ? method : method.apply(context, args)
+    })
+  })
+
+  // “map”的常用用例的便利版本：获取属性。
+  _.pluck = function (obj, key) {
+    return _.map(obj, _.property(key))
+  }
+
+  // “filter”的常见用例的便利版本：只选择对象
+  // 包含特定的“key：value”对。
+  _.where = function (obj, attrs) {
+    return _.filter(obj, _.matcher(attrs))
+  }
+
+  // “find”的常见用例的便利版本：获取第一个对象
+  // 包含特定的“key：value”对。
+  _.findWhear = function (obj, attrs) {
+    return _.find(obj, _.matcher(attrs))
+  }
+
+  // 返回最大元素（或基于元素的计算）
+  _.max = function (obj, iteratee, context) {
+    var result = -Infinity
+    var lastComputed = -Infinity
+    var value, computed
+    if (iteratee == null || (typeof iteratee === 'number' && typeof obj[0] !== 'object') && obj != null) {
+      obj = isArrayLike(obj) ? obj : _.values(obj)
+      for (var i = 0, length = obj.length; i < length; i++) {
+        value = obj[i]
+        if (value != null && value > result) {
+          result = value
+        }
+      }
+    } else {
+      iteratee = cb(iteratee, context)
+      _.each(obj, function (v, index, list) {
+        computed = iteratee(v, index, list)
+        if (computed > lastComputed || computed === -Infinity && result === -Infinity) {
+          result = v
+          lastComputed = computed
+        }
+      })
+    }
+    return result
+  }
+
+  // 返回最小元素（或基于元素的计算）
+  _.min = function (obj, iteratee, context) {
+    var result = Infinity
+    var lastComputed = Infinity
+    var value, computed
+    if (iteratee == null || obj != null && (typeof iteratee === 'number' && typeof obj[0] !== 'object')) {
+      obj = isArrayLike(obj) ? obj : _.values(obj)
+      for (var i = 0, length = obj.length; i < length; i++) {
+        value = obj[i]
+        if (value != null && value < result) {
+          result = value
+        }
+      }
+    } else {
+      iteratee = cb(iteratee, context)
+      _.each(obj, function (v, index, list) {
+        computed = iteratee(v, index, list)
+        if (computed < lastComputed || computed === Infinity && result === Infinity) {
+          result = v
+          lastComputed = computed
+        }
+      })
+    }
+    return result
+  }
 
   // 对象函数
   // Object Functions

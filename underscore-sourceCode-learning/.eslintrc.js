@@ -9,8 +9,7 @@ module.exports = {
         "promise"
     ],
     rules: {
-        'no-unused-vars': 1,
-        'eqeqeq': 0
+        'no-unused-vars': 1
     },
     globals: {
         'self': true
