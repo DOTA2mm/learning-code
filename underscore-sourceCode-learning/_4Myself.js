@@ -9,7 +9,7 @@
   // 不同： 返回值。map()返回由回调函数返回值组成的新数组，forEach()返回undefined
 
   // 保存全局对象
-  var root = typeof self == 'object' && self.self === self && self ||
+  var root = typeof self === 'object' && self.self === self && self ||
     typeof global === 'object' && global.global === global && global ||
     this || {}
   // Establish the root object, `window` (`self`) in the browser, `global`
@@ -56,8 +56,8 @@
   // the browser, add `_` as a global object.
   // (`nodeType` is checked to ensure that `module`
   // and `exports` are not HTML elements.)
-  if (typeof exports != 'undefined' && !exports.nodeType) {
-    if (typeof module != 'undefined' && !module.nodeType && module.exports) {
+  if (typeof exports !== 'undefined' && !exports.nodeType) {
+    if (typeof module !== 'undefined' && !module.nodeType && module.exports) {
       exports = module.exports = _
     }
     exports._ = _
