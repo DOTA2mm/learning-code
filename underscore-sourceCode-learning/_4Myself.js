@@ -408,7 +408,7 @@
     return result
   }
 
-  // 随机一个集合
+  // 将一个集合洗牌
   _.stuffle = function (obj) {
     return _.sample(obj, Infinity)
   }
@@ -467,6 +467,12 @@
       return result
     }
   }
+
+  // 按标准对对象的值进行分组。 传递字符串属性分组，或返回标准的函数。
+  _.grounpBy = group(function (result, value, key) {
+    if (_.has(result, key)) result[key].push(value)
+    else result[key] = [value]
+  })
 
   // 对象函数
   // Object Functions
