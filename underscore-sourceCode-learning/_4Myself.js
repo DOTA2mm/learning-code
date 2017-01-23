@@ -408,6 +408,66 @@
     return result
   }
 
+  // 随机一个集合
+  _.stuffle = function (obj) {
+    return _.sample(obj, Infinity)
+  }
+
+  // 从一个集合中抽出n个样品，使用符合现代Fisher-Yates shuffle（费雪耶茨洗牌算法）
+  // 如果没有指定n,则随机单独一个元素
+  // 参数 guard 来确定是否使用 map
+  _.sample = function (obj, n, guard) {
+    if (n == null || guard) {
+      if (!isArrayLike(obj)) obj = _.values(obj)
+      return obj[_.random(obj.length - 1)]
+    }
+    var sample = isArrayLike(obj) ? _.clone(obj) : _.values(obj)
+    var length = getLength(sample)
+    n = Math.max(Math.min(n, length), 0)
+    var last = length - 1
+    for (var index = 0; index < n; index++) {
+      var rand = _.random(index, last)
+      var temp = sample[index]
+      sample[index] = sample[rand]
+      sample[rand] = temp
+    }
+    return sample.slice(0, n)
+  }
+
+  // 按照迭代器生成的标准对对象的值进行排序
+  _.sortBy = function (obj, iteratee, context) {
+    var index = 0
+    iteratee = cb(iteratee, context)
+    return _.pluck(_.map(obj, function (value, key, list) {
+      return {
+        value: value,
+        index: index++,
+        criteria: iteratee(value, key, list)
+      }
+    }).sort(function (left, right) {
+      var a = left.criteria
+      var b = right.criteria
+      if (a !== b) {
+        if (a > b || a === void 0) return 1
+        if (a < b || b === void 0) return -1
+      }
+      return left.index - right.index
+    }), 'value')
+  }
+
+  // 用于聚合“分组”操作的内部函数
+  var group = function (behavior, partiton) {
+    return function (obj, iteratee, context) {
+      var result = partiton ? [[], []] : {}
+      iteratee = cb(iteratee, context)
+      _.each(obj, function (value, index) {
+        var key = iteratee(value, index, obj)
+        behavior(result, value, key)
+      })
+      return result
+    }
+  }
+
   // 对象函数
   // Object Functions
   // --------------
