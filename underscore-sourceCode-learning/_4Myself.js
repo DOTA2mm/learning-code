@@ -455,7 +455,11 @@
     }), 'value')
   }
 
-  // 用于聚合“分组”操作的内部函数
+  /**
+   * - 用于聚合“分组”操作的内部函数
+   * @param {Function} behavior - 聚合规则
+   * @param partiton 返回结果集形式
+   */
   var group = function (behavior, partiton) {
     return function (obj, iteratee, context) {
       var result = partiton ? [[], []] : {}
@@ -469,9 +473,14 @@
   }
 
   // 按标准对对象的值进行分组。 传递字符串属性分组，或返回标准的函数。
-  _.grounpBy = group(function (result, value, key) {
+  _.groupBy = group(function (result, value, key) {
     if (_.has(result, key)) result[key].push(value)
-    else result[key] = [value]
+    else result[key] = value
+  })
+
+  // 按指定key进行分组
+  _.indexBy = group(function (result, value, key) {
+    result[key] = value
   })
 
   // 对象函数
@@ -510,4 +519,106 @@
       return toString.call(obj) === '[object ' + name + ']'
     }
   })
+
+  // 实用功能 （Unility Functions）
+  // ------------------
+
+  // 放弃Underscore 的控制变量"_"。返回Underscore 对象的引用。
+  _.noConflict = function () {
+    root._ = previouseUnderscore
+    return this
+  }
+
+  // 返回与传入参数相等的值，作为默认的迭代器iteratee
+  _.identity = function (value) {
+    return value
+  }
+
+  // 生成一个返回出入参数的函数，通常在Underscore外部使用
+  _.constant = function (value) {
+    return function () {
+      return value
+    }
+  }
+
+  // 空函数
+  _.noop = function () {}
+
+  // 属相访问
+  _.property = function (path) {
+    if (!_.isArray(path)) {
+      return shallowProperty(path)
+    }
+    return function (obj) {
+      return deepGet(obj, path)
+    }
+  }
+
+  // 生成一个为给定对象查找属性的函数
+  _.propertyOf = function (obj) {
+    if (obj == null) {
+      return function () {}
+    }
+    return function (path) {
+      return !_.isArray(path) ? obj[path] : deepGet(obj, path)
+    }
+  }
+
+  // 返回用于验证给定键值对集合的函数
+  _.matcher = _.matches = function (attrs) {
+    attrs = _.extendOwn({}, attrs)
+    return function (obj) {
+      return _.isMatch(obj, attrs)
+    }
+  }
+
+
+  // 调用迭代函数 n 次,将每次的index传入迭代函数，生成返回值数组
+  _.times = function (n, iteratee, context) {
+    var accum = Array(Math.min(0, n))
+    iteratee = optimizeCb(iteratee, context, 1)
+    for (var i = 0; i < n; i++) accum[i] = iteratee(i)
+    return accum
+  }
+
+  // 返回一个给定最大值与最小值之间的随机整数
+  _.random = function (min, max) {
+    if (max == null) {
+      max = min
+      min = 0
+    }
+    return min + Math.floor(Math.random() * (max - min + 1))
+  }
+
+  // 当前时间的毫秒数
+  _.now = Date.now || function () {
+    return new Date().getTime()
+  }
+
+  // 用于转义的HTML实体列表。
+  var escapeMap = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#x27;',
+    '`': '&#x60;'
+  }
+  var unescapeMap = _.invert(escapeMap)
+
+  // 转义HTML标签的函数
+  var createEscaper = function (map) {
+    var escaper = function (match) {
+      return map[match]
+    }
+    var source = '(?:' + _.keys(map).join('|') + ')'
+    var testRegexp = RegExp(source)
+    var replaceRegexp = RegExp(source, 'g')
+    return function (string) {
+      string = string == null ? '' : '' + string
+      return testRegexp.test(string) ? string.replace(replaceRegexp, escaper) : string
+    }
+  }
+  _.escape = createEscaper(escapeMap)
+  _.unescape = createEscaper(unescapeMap)
 }())
