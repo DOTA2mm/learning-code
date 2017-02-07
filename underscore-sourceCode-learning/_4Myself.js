@@ -460,6 +460,7 @@
    * @param {Function} behavior - 聚合规则
    * @param partiton 返回结果集形式
    */
+  // TODO: 难点 - group函数的功能
   var group = function (behavior, partiton) {
     return function (obj, iteratee, context) {
       var result = partiton ? [[], []] : {}
@@ -481,6 +482,12 @@
   // 按指定key进行分组
   _.indexBy = group(function (result, value, key) {
     result[key] = value
+  })
+
+  // 按数量分组
+  _.countBy = group(function (result, value, key) {
+    if (_.has(result, key)) result[key]++;
+    else result[key] = 1
   })
 
   // 对象函数
