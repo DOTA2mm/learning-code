@@ -572,7 +572,6 @@
     }
   }
 
-
   // 调用迭代函数 n 次,将每次的index传入迭代函数，生成返回值数组
   _.times = function (n, iteratee, context) {
     var accum = Array(Math.min(0, n))
@@ -621,4 +620,114 @@
   }
   _.escape = createEscaper(escapeMap)
   _.unescape = createEscaper(unescapeMap)
+
+  // 沿着path遍历obj,如果子成员是一个Function则返回调用结果，否则返回该成员
+  // 没找到path对应的成员则用obj直接调用fallback
+  _.result = function (obj, path, fallback) {
+    if (!_.isArray(path)) path = [path] // 使其可以被迭代
+    var length = path.length
+    if (!length) {
+      return _.isFunction(fallback) ? fallback.call(obj) : fallback
+    }
+    for (var i = 0; i < length; i++) {
+      var prop = obj == null ? void 0 : obj[path[i]]
+      if (prop === void 0) {
+        prop = fallback // 没找到path对应的成员
+        i = length
+      }
+      obj = _.isFunction(prop) ? prop.call(obj) : prop
+    }
+    return obj
+  }
+
+  // 生成唯一的ID（在当前客户端回话中唯一）
+  var idCounter = 0
+  _.uniqueId = function (prefix) {
+    var id = ++idCounter + ''
+    return prefix ? prefix + id : id
+  }
+
+  // 模板分隔符设置
+  _.templateSettings = {
+    evaluate: /<%([\s\S]+?)%>/g,
+    interpolate: /<%=([\s\S]+?)%>/g,
+    escape: /<%-([\s\S]+?)%>/
+  }
+
+  // 使用自定义模板分隔符时，需要保证不与上面三种匹配
+  var noMatch = /(.)^/
+
+  // 某些字符需要转义，以便它们可以放入字符串文字。
+  var escapes = {
+    "'": "'",
+    '\\': '\\',
+    '\r': 'r',
+    '\n': 'n',
+    '\u2028': 'u2028',
+    '\u2029': 'u2029'
+  }
+
+  var escapeRegExp = /\\|'|\r|\n|\u2028|\u2089/g
+
+  var escapeChar = function (match) {
+    return '\\' + escapes[match]
+  }
+
+  // JavaScript微模板
+  // TODO: 难点 - 模板引擎
+  _.template = function (text, settings, oldSettings) {
+    if (!settings && oldSettings) settings = oldSettings
+    settings = _.default({}, settings, _.templateSettings)
+
+    // 通过交替将分隔符合并为一个正则表达式。
+    var matcher = RegExp([
+      (settings.escape || noMatch).source,
+      (settings.interpolate || noMatch).source,
+      (settings.evaluate || noMatch).source
+    ].join('|') + '|$', 'g')
+
+    // 编译模板源，适当转义字符串文字
+    var index = 0
+    var source = "__p+='"
+    text.replace(matcher, function (match, escape, interpolate, evaluate, offset) {
+      source += text.slice(index, offset).replace(escapeRegExp, escapeChar)
+      index = offset + match.length
+
+      if (escape) {
+        source += "'+\n((__t=(" + escape + "))==null?'':_.escape(__t))+\n'"
+      } else if (interpolate) {
+        source += "'+\n((__t=(" + interpolate + "))==null?'':__t)+\n"
+      } else if (evaluate) {
+        source += "';\n" + evaluate + "\n__p+='"
+      }
+
+      return match
+    })
+    source += "';\n"
+
+    // 如果没有指定变量，将数据值放在本地作用域中
+    if (!settings.variable) source = 'with(obj||{}){\n' + source + '}\n'
+
+    source = "var __t,__p='',__j=Array.prototype.join," +
+      "print=function(){__p+=__j.call(arguments,'');};\n" +
+      source + 'return __p;\n'
+
+    var render
+    try {
+      render = new Function(settings.variable || 'obj', '_', source)
+    } catch (e) {
+      e.source = source
+      throw e
+    }
+
+    var template = function (data) {
+      return render.call(this, data, _)
+    }
+
+    // 提供编译源以方便预编译。
+    var argument = settings.variable || 'obj'
+    template.source = 'function(' + argument + '){\n' + source + '}'
+
+    return template
+  }
 }())
