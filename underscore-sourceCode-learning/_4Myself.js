@@ -486,7 +486,7 @@
 
   // 按数量分组
   _.countBy = group(function (result, value, key) {
-    if (_.has(result, key)) result[key]++;
+    if (_.has(result, key)) result[key]++
     else result[key] = 1
   })
 
