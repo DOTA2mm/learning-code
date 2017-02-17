@@ -490,6 +490,25 @@
     else result[key] = 1
   })
 
+  var reStrSymbol = /[^\ud800-\udfff]|[\ud800-\udbff][\udc00-\udfff]|[\ud800-\udfff]/g
+  // 将可迭代对象安全转换为数组
+  _.toArray = function (obj) {
+    if (!obj) return []
+    if (_.isArray(obj)) return slice.call(obj)
+    if (_.isString(obj)) {
+      // Keep surrogate pair characters together ?
+      return obj.match(reStrSymbol)
+    }
+    if (isArrayLike(obj)) return _.map(obj, _.identity)
+    return _.values(obj)
+  }
+
+  // 返回对象中元素的个数
+  _.size = function (obj) {
+    if (obj == null) return 0
+    return isArrayLike(obj) ? obj.length : _.keys(obj).length
+  }
+
   // 对象函数
   // Object Functions
   // --------------
