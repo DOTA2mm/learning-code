@@ -459,6 +459,7 @@
    * - 用于聚合“分组”操作的内部函数
    * @param {Function} behavior - 聚合规则
    * @param partiton 返回结果集形式
+   * @return {Object | Array} result
    */
   // TODO: 难点 - group函数的功能
   var group = function (behavior, partiton) {
@@ -490,6 +491,11 @@
     else result[key] = 1
   })
 
+  // 将集合一分为二：一部分都满足条件，另一部分都不满足
+  _.partition = group(function (result, value, pass) {
+    result[pass ? 0 : 1].push(value)
+  }, true) // 传了第二个参数，返回result为一个二维数组
+
   var reStrSymbol = /[^\ud800-\udfff]|[\ud800-\udbff][\udc00-\udfff]|[\ud800-\udfff]/g
   // 将可迭代对象安全转换为数组
   _.toArray = function (obj) {
@@ -507,6 +513,39 @@
   _.size = function (obj) {
     if (obj == null) return 0
     return isArrayLike(obj) ? obj.length : _.keys(obj).length
+  }
+
+  // 数组处理函数库
+  // Array Functions
+  // --------------
+
+  /**
+   * first, initial, last, rest 一组取数组开头、结尾相应位数的方法
+   * 也适用于类数组对象
+   * 函数功能单一化，无副作用（slice
+   */
+  // 取数组第一位或开头n位
+  _.first = _.head = _.take = function (array, n, guard) {
+    if (array == null || array.length < 1) return void 0
+    if (n == null || guard) return array[0]
+    return _.initial(array, array.length - n)
+  }
+
+  // 取数组的第前n个元素
+  _.initial = function (array, n, guard) {
+    return slice.call(array, 0, Math.max(0, array.length - (n == null || guard ? 1 : n)))
+  }
+
+  // 取数组元素最后一位或多位
+  _.last = function (array, n, guard) {
+    if (array == null || array.length < 1) return void 0
+    if (n == null || guard) return array[array.length - 1]
+    return _.rest(array, Math.max(0, array.length - n))
+  }
+
+  // 取数组后n位
+  _.rest = _.tail = _.drop = function (array, n, guard) {
+    return slice.call(array, n == null || guard ? 1 : n)
   }
 
   // 对象函数
@@ -546,7 +585,7 @@
     }
   })
 
-  // 实用功能 （Unility Functions）
+  // 实用功能 （Utility Functions）
   // ------------------
 
   // 放弃Underscore 的控制变量"_"。返回Underscore 对象的引用。
@@ -570,7 +609,7 @@
   // 空函数
   _.noop = function () {}
 
-  // 属相访问
+  // 属性访问
   _.property = function (path) {
     if (!_.isArray(path)) {
       return shallowProperty(path)
@@ -740,7 +779,7 @@
 
     var render
     try {
-      render = new Function(settings.variable || 'obj', '_', source)
+      render = new Function(settings.variable || 'obj', '_', source) // eslint-disable-line
     } catch (e) {
       e.source = source
       throw e
@@ -755,5 +794,12 @@
     template.source = 'function(' + argument + '){\n' + source + '}'
 
     return template
+  }
+
+  // 添加一个“链函数”,开始连接被包装的Underscore对象
+  _.chain = function (obj) {
+    var instance = _(obj)
+    instance._chain = true
+    return instance
   }
 }())
