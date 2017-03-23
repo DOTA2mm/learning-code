@@ -183,8 +183,9 @@
   var MAX_ARRAY_INDEX = Math.pow(2, 53) - 1
   var getLength = shallowProperty('length')
   /**
-   * - 是否类数组对象
-   * 通过length属性判断是否为数组或类数组对象
+   * 是否类数组对象
+   * - 通过length属性判断是否为数组或类数组对象
+   * @param {Array | Object} collection 需要检查长度的对象
    */
   var isArrayLike = function (collection) {
     var length = getLength(collection)
@@ -546,6 +547,47 @@
   // 取数组后n位
   _.rest = _.tail = _.drop = function (array, n, guard) {
     return slice.call(array, n == null || guard ? 1 : n)
+  }
+
+  // 剔除数组中转换类型后为false的值
+  // 即过滤数组中的 false, null, 0, "", undefined, NaN
+  _.compact = function (array) {
+    // 这里用Boolean构造函数作为filter的回调，显式转换为布尔类型
+    return _.filter(array, Boolean)
+  }
+
+  /**
+   * 内部的数组扁平化函数
+   * @param {Array} input 需要扁平化的数组或类数组对象
+   * @param {Boolean} shallow 是否深度展开（是否递归）
+   * @param {Boolean} strict 是否接受Object作为处理对象
+   * @param {Array?} output 输出形式，可接受初始值
+   */
+  var flatten = function (input, shallow, strict, output) {
+    console.log(shallow)
+    output = output || []
+    var idx = output.length
+    for (var i = 0, length = getLength(input); i < length; i++) {
+      var value = input[i]
+      if (isArrayLike(value) && (_.isArray(value) || _.isArguments(value))) {
+        if (shallow) {
+          var j = 0
+          var len = value.length
+          while (j < len) output[idx++] = value[j++]
+        } else {
+          flatten(value, shallow, strict, output)
+          idx = output.length
+        }
+      } else if (!strict) {
+        output[idx++] = value
+      }
+    }
+    return output
+  }
+
+  // 扁平化任何嵌套深度的数组
+  _.flatten = function (array, shallow) {
+    return flatten(array, shallow, false)
   }
 
   // 对象函数
