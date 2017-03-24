@@ -590,6 +590,62 @@
     return flatten(array, shallow, false)
   }
 
+  // 返回数组的副本，并删除所有值的实例。
+  _.without = restArgs(function (array, otherArrays) {
+    return _.difference(array, otherArrays)
+  })
+
+  // 生成数组的无重复版本。如果数组已经排序，可以选择更快的算法
+  // TODO: 去重
+  _.uniq = _.unique = function (array, isSorted, iteratee, context) {
+    if (!_.isBoolean(isSorted)) { // 调整参数位置
+      context = iteratee
+      iteratee = isSorted
+      isSorted = false
+    }
+    if (iteratee != null) iteratee = cb(iteratee, context)
+    var result = []
+    var seen = []
+    for (var i = 0, length = getLength(array); i < length; i++) {
+      var value = array[i]
+      var computed = iteratee ? iteratee(value, i, array) : value
+      if (isSorted) {
+        if (!i || seen !== computed) result.push(value)
+        seen = computed
+      } else if (iteratee) {
+        if (!_.contains(seen, computed)) {
+          seen.push(computed)
+          result.push(value)
+        }
+      } else if (!_.contains(result, value)) {
+        result.push(value)
+      }
+    }
+    return result
+  }
+
+ // 计算传入数组的并集：按顺序列出的一个或多个数组中的唯一项目列表。
+  _.union = restArgs(function (array) {
+    return _.uniq(flatten(array, true, true))
+  })
+
+  // 计算作为所有数组的交集的值列表。结果中的每个值都存在于每个数组中。
+  _.intersection = function (array) {
+    var result = []
+    var argsLength = arguments.length
+    for (var i = 1, length = getLength(array); i < length; i++) {
+      var item = array[i]
+      if (_.contains(result, item)) continue
+      var j
+      for (j = 1; j < argsLength; j++) {
+        // 内存循环控制
+        if (!_.contains(arguments[j], item)) break
+      }
+      if (j === argsLength) result.push(item)
+    }
+    return result
+  }
+
   // 对象函数
   // Object Functions
   // --------------
