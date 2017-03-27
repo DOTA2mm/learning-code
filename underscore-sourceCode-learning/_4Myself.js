@@ -630,21 +630,79 @@
   })
 
   // 计算作为所有数组的交集的值列表。结果中的每个值都存在于每个数组中。
+  // 接受多个数组作为参数
   _.intersection = function (array) {
+    // 形参array是传入数组的第一个
     var result = []
-    var argsLength = arguments.length
+    var argsLength = arguments.length // 参数（要比较的数组）的个数
     for (var i = 1, length = getLength(array); i < length; i++) {
       var item = array[i]
       if (_.contains(result, item)) continue
       var j
       for (j = 1; j < argsLength; j++) {
-        // 内存循环控制
+        // 内存循环判断后续数组中是否包含array中的元素
         if (!_.contains(arguments[j], item)) break
       }
+      // 已经确认过取到的array中的元素不存在与后续所有的数组中
       if (j === argsLength) result.push(item)
     }
     return result
   }
+
+  // 类似于_.without,返回的是array排除与后续数组中存在的相同元素的结果
+  _.difference = restArgs(function (array, rest) {
+    rest = flatten(rest, true, true)
+    return _.filter(array, function (value) {
+      return !_.contains(rest, value)
+    })
+  })
+
+  _.unzip = function (array) {
+    var length = array && _.max(array, getLength).length || 0
+    var result = Array(length)
+
+    for (var index = 0; index < length; index++) {
+      result[index] = _.pluck(array, index)
+    }
+    return result
+  }
+
+  _.zip = restArgs(_.unzip)
+
+  // 将数组转换成相应的对象
+  // values参数可选，给了则将list中元素作为key,values元素作为value
+  _.object = function (list, values) {
+    var result = {}
+    for (var i = 0, length = getLength(list); i < length; i++) {
+      if (values) {
+        result[list[i]] = values[i]
+      } else {
+        result[list[i][0]] = list[i][1]
+      }
+    }
+    return result
+  }
+
+  /**
+   * 创建正向或反向查找index的函数
+   * @param {Number} dir 确定是否正向(dir > 0: 正向)
+   */
+  var createPredicateIndexFinder = function (dir) {
+    return function (array, predicate, context) {
+      predicate = cb(predicate, context)
+      var length = getLength(array)
+      var index = dir > 0 ? 0 : length - 1 // 确定是否正向
+      for (; index >= 0 && index < length; index += dir) {
+        if (predicate(array[index], index, array)) return index
+      }
+    }
+  }
+
+  // 返回通过谓词测试的数组上的第一个索引
+  _.findIndex = createPredicateIndexFinder(1)
+  _.findLastIndex = createPredicateIndexFinder(-1)
+
+
 
   // 对象函数
   // Object Functions
