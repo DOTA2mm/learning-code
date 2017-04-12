@@ -183,8 +183,9 @@
   var MAX_ARRAY_INDEX = Math.pow(2, 53) - 1
   var getLength = shallowProperty('length')
   /**
-   * - 是否类数组对象
-   * 通过length属性判断是否为数组或类数组对象
+   * 是否类数组对象
+   * - 通过length属性判断是否为数组或类数组对象
+   * @param {Array | Object} collection 需要检查长度的对象
    */
   var isArrayLike = function (collection) {
     var length = getLength(collection)
@@ -459,6 +460,7 @@
    * - 用于聚合“分组”操作的内部函数
    * @param {Function} behavior - 聚合规则
    * @param partiton 返回结果集形式
+   * @return {Object | Array} result
    */
   // TODO: 难点 - group函数的功能
   var group = function (behavior, partiton) {
@@ -490,6 +492,11 @@
     else result[key] = 1
   })
 
+  // 将集合一分为二：一部分都满足条件，另一部分都不满足
+  _.partition = group(function (result, value, pass) {
+    result[pass ? 0 : 1].push(value)
+  }, true) // 传了第二个参数，返回result为一个二维数组
+
   var reStrSymbol = /[^\ud800-\udfff]|[\ud800-\udbff][\udc00-\udfff]|[\ud800-\udfff]/g
   // 将可迭代对象安全转换为数组
   _.toArray = function (obj) {
@@ -508,6 +515,194 @@
     if (obj == null) return 0
     return isArrayLike(obj) ? obj.length : _.keys(obj).length
   }
+
+  // 数组处理函数库
+  // Array Functions
+  // --------------
+
+  /**
+   * first, initial, last, rest 一组取数组开头、结尾相应位数的方法
+   * 也适用于类数组对象
+   * 函数功能单一化，无副作用（slice
+   */
+  // 取数组第一位或开头n位
+  _.first = _.head = _.take = function (array, n, guard) {
+    if (array == null || array.length < 1) return void 0
+    if (n == null || guard) return array[0]
+    return _.initial(array, array.length - n)
+  }
+
+  // 取数组的第前n个元素
+  _.initial = function (array, n, guard) {
+    return slice.call(array, 0, Math.max(0, array.length - (n == null || guard ? 1 : n)))
+  }
+
+  // 取数组元素最后一位或多位
+  _.last = function (array, n, guard) {
+    if (array == null || array.length < 1) return void 0
+    if (n == null || guard) return array[array.length - 1]
+    return _.rest(array, Math.max(0, array.length - n))
+  }
+
+  // 取数组后n位
+  _.rest = _.tail = _.drop = function (array, n, guard) {
+    return slice.call(array, n == null || guard ? 1 : n)
+  }
+
+  // 剔除数组中转换类型后为false的值
+  // 即过滤数组中的 false, null, 0, "", undefined, NaN
+  _.compact = function (array) {
+    // 这里用Boolean构造函数作为filter的回调，显式转换为布尔类型
+    return _.filter(array, Boolean)
+  }
+
+  /**
+   * 内部的数组扁平化函数
+   * @param {Array} input 需要扁平化的数组或类数组对象
+   * @param {Boolean} shallow 是否深度展开（是否递归）
+   * @param {Boolean} strict 是否接受Object作为处理对象
+   * @param {Array?} output 输出形式，可接受初始值
+   */
+  var flatten = function (input, shallow, strict, output) {
+    console.log(shallow)
+    output = output || []
+    var idx = output.length
+    for (var i = 0, length = getLength(input); i < length; i++) {
+      var value = input[i]
+      if (isArrayLike(value) && (_.isArray(value) || _.isArguments(value))) {
+        if (shallow) {
+          var j = 0
+          var len = value.length
+          while (j < len) output[idx++] = value[j++]
+        } else {
+          flatten(value, shallow, strict, output)
+          idx = output.length
+        }
+      } else if (!strict) {
+        output[idx++] = value
+      }
+    }
+    return output
+  }
+
+  // 扁平化任何嵌套深度的数组
+  _.flatten = function (array, shallow) {
+    return flatten(array, shallow, false)
+  }
+
+  // 返回数组的副本，并删除所有值的实例。
+  _.without = restArgs(function (array, otherArrays) {
+    return _.difference(array, otherArrays)
+  })
+
+  // 生成数组的无重复版本。如果数组已经排序，可以选择更快的算法
+  // TODO: 去重
+  _.uniq = _.unique = function (array, isSorted, iteratee, context) {
+    if (!_.isBoolean(isSorted)) { // 调整参数位置
+      context = iteratee
+      iteratee = isSorted
+      isSorted = false
+    }
+    if (iteratee != null) iteratee = cb(iteratee, context)
+    var result = []
+    var seen = []
+    for (var i = 0, length = getLength(array); i < length; i++) {
+      var value = array[i]
+      var computed = iteratee ? iteratee(value, i, array) : value
+      if (isSorted) {
+        if (!i || seen !== computed) result.push(value)
+        seen = computed
+      } else if (iteratee) {
+        if (!_.contains(seen, computed)) {
+          seen.push(computed)
+          result.push(value)
+        }
+      } else if (!_.contains(result, value)) {
+        result.push(value)
+      }
+    }
+    return result
+  }
+
+ // 计算传入数组的并集：按顺序列出的一个或多个数组中的唯一项目列表。
+  _.union = restArgs(function (array) {
+    return _.uniq(flatten(array, true, true))
+  })
+
+  // 计算作为所有数组的交集的值列表。结果中的每个值都存在于每个数组中。
+  // 接受多个数组作为参数
+  _.intersection = function (array) {
+    // 形参array是传入数组的第一个
+    var result = []
+    var argsLength = arguments.length // 参数（要比较的数组）的个数
+    for (var i = 1, length = getLength(array); i < length; i++) {
+      var item = array[i]
+      if (_.contains(result, item)) continue
+      var j
+      for (j = 1; j < argsLength; j++) {
+        // 内存循环判断后续数组中是否包含array中的元素
+        if (!_.contains(arguments[j], item)) break
+      }
+      // 已经确认过取到的array中的元素不存在与后续所有的数组中
+      if (j === argsLength) result.push(item)
+    }
+    return result
+  }
+
+  // 类似于_.without,返回的是array排除与后续数组中存在的相同元素的结果
+  _.difference = restArgs(function (array, rest) {
+    rest = flatten(rest, true, true)
+    return _.filter(array, function (value) {
+      return !_.contains(rest, value)
+    })
+  })
+
+  _.unzip = function (array) {
+    var length = array && _.max(array, getLength).length || 0
+    var result = Array(length)
+
+    for (var index = 0; index < length; index++) {
+      result[index] = _.pluck(array, index)
+    }
+    return result
+  }
+
+  _.zip = restArgs(_.unzip)
+
+  // 将数组转换成相应的对象
+  // values参数可选，给了则将list中元素作为key,values元素作为value
+  _.object = function (list, values) {
+    var result = {}
+    for (var i = 0, length = getLength(list); i < length; i++) {
+      if (values) {
+        result[list[i]] = values[i]
+      } else {
+        result[list[i][0]] = list[i][1]
+      }
+    }
+    return result
+  }
+
+  /**
+   * 创建正向或反向查找index的函数
+   * @param {Number} dir 确定是否正向(dir > 0: 正向)
+   */
+  var createPredicateIndexFinder = function (dir) {
+    return function (array, predicate, context) {
+      predicate = cb(predicate, context)
+      var length = getLength(array)
+      var index = dir > 0 ? 0 : length - 1 // 确定是否正向
+      for (; index >= 0 && index < length; index += dir) {
+        if (predicate(array[index], index, array)) return index
+      }
+    }
+  }
+
+  // 返回通过谓词测试的数组上的第一个索引
+  _.findIndex = createPredicateIndexFinder(1)
+  _.findLastIndex = createPredicateIndexFinder(-1)
+
+
 
   // 对象函数
   // Object Functions
@@ -546,7 +741,7 @@
     }
   })
 
-  // 实用功能 （Unility Functions）
+  // 实用功能 （Utility Functions）
   // ------------------
 
   // 放弃Underscore 的控制变量"_"。返回Underscore 对象的引用。
@@ -570,7 +765,7 @@
   // 空函数
   _.noop = function () {}
 
-  // 属相访问
+  // 属性访问
   _.property = function (path) {
     if (!_.isArray(path)) {
       return shallowProperty(path)
@@ -740,7 +935,7 @@
 
     var render
     try {
-      render = new Function(settings.variable || 'obj', '_', source)
+      render = new Function(settings.variable || 'obj', '_', source) // eslint-disable-line
     } catch (e) {
       e.source = source
       throw e
@@ -755,5 +950,12 @@
     template.source = 'function(' + argument + '){\n' + source + '}'
 
     return template
+  }
+
+  // 添加一个“链函数”,开始连接被包装的Underscore对象
+  _.chain = function (obj) {
+    var instance = _(obj)
+    instance._chain = true
+    return instance
   }
 }())
