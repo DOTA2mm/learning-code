@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>ProjectC 2048game</title>
+	<link rel="stylesheet" type="text/css" href="2048.css">
+	<script type="text/javascript" src="2048.js"></script>
+</head>
+<body>
+	<!-- 分数部分 -->
+	<p>Top:<span id="top"></span></br>
+	Score:<span id="score"></span>
+	</p>
+	<div id="gridPanel">
+		
+	</div>
+	<!-- 游戏结束弹出框 -->
+	<div id="gameover">
+		<div><!--背景--></div>
+		<p><!--前景框-->
+			Game Over</br>
+			Score:<span id="finalScore"></span></br>
+			<a id="button" onclick="game.start()">Try again</a>
+		</p>
+	</div>
+</body>
+</html>
