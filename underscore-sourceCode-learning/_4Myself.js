@@ -702,7 +702,70 @@
   _.findIndex = createPredicateIndexFinder(1)
   _.findLastIndex = createPredicateIndexFinder(-1)
 
+  // 使用比较函数来计算应该插入一个对象的最小索引，以保持顺序
+  _.sortedIndex = function (array, obj, iteratee, context) {
+    iteratee = cb(iteratee, context, 1)
+    var value = iteratee(obj)
+    var low = 0
+    var high = getLength(array)
+    while (low < high) {
+      var mid = Math.floor((low + high) / 2)
+      // 二分法确定位置
+      if (iteratee(array[mid]) < value) low = mid + 1
+      else high = mid
+    }
+    return low
+  }
 
+  /**
+   * 生成函数来创建 indexof 和 lastIndexOf 函数
+   * @param {Number} dir 查找方向（正向 or 反向）
+   * @param {Function} predicateFind 查找范围
+   * @param {Function} sortedIndex 排序索引
+   */
+  var createIndexFinder = function (dir, predicateFind, sortedIndex) {
+    return function (array, item, idx) {
+      var i = 0
+      var length = getLength(array)
+      if (typeof idx === 'number') {
+        if (dir > 0) {
+          i = idx >= 0 ? idx : Math.max(idx + length, i)
+        } else {
+          length = idx >= 0 ? Math.min(idx + 1, length) : idx + length + 1
+        }
+      } else if (sortedIndex && idx && length) {
+        idx = sortedIndex(array, item)
+        return array[idx] === item ? idx : -1
+      }
+      if (item !== item) { // eslint-disable-line
+        idx = predicateFind(slice.call(array, i, length), _.isNaN)
+        return idx >= 0 ? idx + i : -1
+      }
+      for (idx = dir > 0 ? i : length - 1; idx >= 0 && idx < length; idx += dir) {
+        if (array[idx] === item) return idx
+      }
+      return -1
+    }
+  }
+
+  _.indexOf = createIndexFinder(1, _.findIndex, _.sortedIndex)
+  _.lastIndexOf = createIndexFinder(-1, _.findLastIndex)
+
+  _.range = function (start, stop, step) {
+    if (stop == null) {
+      stop = start || 0
+      start = 0
+    }
+    if (!step) {
+      step = stop < start ? -1 : 1
+    }
+    var length = Math.max(Math.ceil((stop - start) / step), 0)
+    var range = Array(length)
+    for (var idx = 0; idx < length; idx++, start += step) {
+      range[idx] = start
+    }
+    return range
+  }
 
   // 对象函数
   // Object Functions
