@@ -751,6 +751,7 @@
   _.indexOf = createIndexFinder(1, _.findIndex, _.sortedIndex)
   _.lastIndexOf = createIndexFinder(-1, _.findLastIndex)
 
+  // 根据给出的起始，末尾，步进值生成相应数组
   _.range = function (start, stop, step) {
     if (stop == null) {
       stop = start || 0
@@ -766,6 +767,45 @@
     }
     return range
   }
+
+  // 数组按给定长度分块
+  _.chunk = function (array, count) {
+    if (count == null || count < 1) return []
+    var result = []
+    var i = 0
+    var length = array.length
+    while (i < length) {
+      result.push(slice.call(array, i, i += count))
+    }
+    return result
+  }
+
+  // Function Functions
+  // --------------
+
+  /**
+   * 确定是否使用提供的参数作为构造函数或普通函数执行函数
+   * @param {Function} sourceFunc
+   * @param {Function} boundFunc
+   * @param {Object} context
+   * @param {Object} callingContext
+   * @param {*} args
+   */
+  var executeBound = function (sourceFunc, boundFunc, context, callingContext, args) {
+    if (!(callingContext instanceof boundFunc)) return sourceFunc.apply(context, args)
+    var self = baseCreate(sourceFunc.property)
+    var result = sourceFunc.apply(self, args)
+    if (_.isObject(result)) return result
+    return self
+  }
+
+  _.bind = restArgs(function (func, context, args) {
+    if (!_.isFunction(func)) throw new TypeError('Bind must be called on a function')
+    var bound = restArgs(function (callArgs) {
+      return executeBound(func, bound, context, this, args.concat(callArgs))
+    })
+    return bound
+  })
 
   // 对象函数
   // Object Functions
