@@ -8,9 +8,9 @@
 
 'use strict';
 
-const PENDING = Symbol(); // 表示（未决）pending 状态
-const FULFILLED = Symbol(); // 表示（已决）fulfilled 状态
-const REJECTED = Symbol(); // 表示（拒绝）rejected 状态
+const PENDING = Symbol('PENDING'); // 表示（未决）pending 状态
+const FULFILLED = Symbol('FULFILLED'); // 表示（已决）fulfilled 状态
+const REJECTED = Symbol('REJECTED'); // 表示（拒绝）rejected 状态
 
 function Promisee (fn) {
   if (typeof fn !== 'function') { // 入参类型检测
