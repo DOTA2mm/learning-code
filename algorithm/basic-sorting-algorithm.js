@@ -6,7 +6,7 @@
  * - 每一次比较都将最大值冒泡到数组的末尾
  * - 外层循环遍历整个数组
  * - 内存循环负责将每一轮中的最大值冒泡到末尾
- * @param {Array} arr 需要排序的数组 
+ * @param {Array} arr 需要排序的数组
  */
 function bubbleSort(arr) {
   let temp
@@ -25,7 +25,7 @@ function bubbleSort(arr) {
 /**
  * 选择排序
  * - 每次找到最小值位置，然后与未排序部份的首位互换
- * @param {Array} arr 需要排序的数组 
+ * @param {Array} arr 需要排序的数组
  */
 function selectionSort(arr) {
   let minPos
@@ -61,7 +61,7 @@ function insertionSort(arr) {
      * arr[j + 1] = arr[j] 将已排序部分当前元素后移一位，再将前一位与temp比较
      * 将temp插入到已排序部分的适当位置 （每次移动已排序部分都会j--）
      */
-    for (j = i -1; j > -1 && arr[j] > temp; j--) {
+    for (j = i - 1; j > -1 && arr[j] > temp; j--) {
       arr[j + 1] = arr[j]
     }
     arr[j + 1] = temp
@@ -114,13 +114,12 @@ function mergeSort(arr) {
   }
 }
 
-
 /**
  * 快速排序
  * - http://javascript.ruanyifeng.com/library/sorting.html#toc12
- * @param {Array} arr 
- * @param {?Number} left 
- * @param {?Number} right 
+ * @param {Array} arr
+ * @param {?Number} left
+ * @param {?Number} right
  */
 function quickSort(arr, left, right) {
   if (arr.length < 2) return arr
@@ -140,9 +139,9 @@ function quickSort(arr, left, right) {
    * 完成一轮排序
    * - 将所有小于“支点”的值都放在该点的左侧
    * - 大于“支点”的值都放在该点的右侧
-   * @param {Array} arr 
-   * @param {Number} left 
-   * @param {Number} right 
+   * @param {Array} arr
+   * @param {Number} left
+   * @param {Number} right
    */
   function parttion(arr, left, right) {
     // 通过给定的左右指针位置确定“支点”(pivot)
@@ -171,9 +170,9 @@ function quickSort(arr, left, right) {
 
   /**
    * 互换给定数组两个位置的值
-   * @param {Array} arr 
-   * @param {Number} i 
-   * @param {Number} j 
+   * @param {Array} arr
+   * @param {Number} i
+   * @param {Number} j
    */
   function swap(arr, i, j) {
     var temp = arr[i]
