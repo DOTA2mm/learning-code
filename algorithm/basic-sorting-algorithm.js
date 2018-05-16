@@ -126,7 +126,7 @@ function quickSort(arr, left, right) {
   // 建立两端的指针
   left = typeof left !== 'number' ? 0 : left
   right = typeof right !== 'number' ? arr.length - 1 : right
-  var index = parttion(arr, left, right)
+  var index = partition(arr, left, right)
   if (left < index - 1) {
     quickSort(arr, left, index - 1)
   }
@@ -143,7 +143,7 @@ function quickSort(arr, left, right) {
    * @param {Number} left
    * @param {Number} right
    */
-  function parttion(arr, left, right) {
+  function partition(arr, left, right) {
     // 通过给定的左右指针位置确定“支点”(pivot)
     var pivot = arr[Math.floor((right + left) / 2)]
     var i = left
@@ -180,3 +180,41 @@ function quickSort(arr, left, right) {
     arr[j] = temp
   }
 }
+
+var QuickSort = (function (array, left, right) {
+  function swap (array, i, j) {
+    var temp = array[i];
+    array[i] = array[j];
+    array[j] = temp;
+  }
+
+  function partition (array, pivot, left, right) {
+    var pivotValue = array[pivot];
+    var partitionIndex = left;
+
+    for (var i = left; i < right; i++) {
+      if (array[i] < pivotValue) {
+        swap(array, i, partitionIndex)
+        partitionIndex++;
+      }
+    }
+    swap(array, right, partitionIndex)
+    return partitionIndex
+  }
+
+  function quickSort (array, left, right) {
+    left = typeof left !== 'number' ? 0 : left
+    right = typeof right !== 'number' ? array.length - 1 : right
+    var pivot;
+    var partitionIndex;
+    if (left < right) {
+      pivot = right; // 选用最后一个作为 pivod
+      partitionIndex = partition(array, pivot, left, right);
+      quickSort(array, left, partitionIndex - 1); // 排序左侧
+      quickSort(array, partitionIndex + 1, right); // 排序右侧
+    }
+    return array;
+  }
+
+  return quickSort;
+}());
