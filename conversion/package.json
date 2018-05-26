@@ -1,5 +1,5 @@
 {
-  "name": "base-n",
+  "name": "radix-n",
   "version": "1.0.0",
   "description": "A JavaScript BaseN(1<n<63) encode/decoder",
   "main": "index.js",
