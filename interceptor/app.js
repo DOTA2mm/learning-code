@@ -1,5 +1,5 @@
-const Server = require('./lib/interceptor-server')
-const router = require('./lib/interceptor-router')
+const Server = require('./interceptor-server')
+const router = require('./interceptor-router')
 
 const app = new Server()
 

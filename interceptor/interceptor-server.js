@@ -23,7 +23,7 @@ module.exports = class {
   }
 
   listen(port = 80, cb) {
-    this.server.listen(port, () => cb(this.server))
+    this.server.listen(port, '127.0.0.1', () => cb(this.server))
   }
 
   use(functor) {
